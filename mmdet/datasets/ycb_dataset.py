@@ -27,14 +27,11 @@ class YcbDataset(CocoDataset):
 			# the original RLE encoded by cocoAPI gives bytes type of data, which cannot be dumped into json.
 			# in data_converter, i used 'ascii' format to decode bytes to string and stored in json.
 			# now, i should first encode RLE back using consistent format.
-			if ann.get('ignore', False):
-				continue
 			ann['segmentation']['counts'] = ann['segmentation']['counts'].encode('ascii')
 			
-			x1, y1, w, h = ann['bbox']
-			if ann['area'] <= 0 or w < 1 or h < 1:
-				continue
-			bbox = [x1, y1, x1 + w - 1, y1 + h - 1]
+			rmin, rmax, cmin, cmax = ann['bbox']
+			# bbox = [x1, y1, x1 + w - 1, y1 + h - 1]
+			bbox = [cmin, rmin, cmax, rmax]
 			
 			# if ann.get('iscrowd', False):
 			#   gt_bboxes_ignore.append(bbox)
@@ -42,7 +39,7 @@ class YcbDataset(CocoDataset):
 			gt_bboxes.append(bbox)
 			gt_labels.append(self.cat2label[ann['category_id']])
 			gt_masks_ann.append(ann['segmentation'])
-			
+		
 		if gt_bboxes:
 			gt_bboxes = np.array(gt_bboxes, dtype=np.float32)
 			gt_labels = np.array(gt_labels, dtype=np.int64)
@@ -58,6 +55,6 @@ class YcbDataset(CocoDataset):
 		seg_map = img_info['filename'].replace('jpg', 'png')
 		
 		ann = dict(bboxes=gt_bboxes, labels=gt_labels, bboxes_ignore=gt_bboxes_ignore, masks=gt_masks_ann,
-			seg_map=seg_map)
+		           seg_map=seg_map)
 		
 		return ann
